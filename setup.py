@@ -21,9 +21,17 @@ setup(
             "Operating System :: POSIX",
             "Operating System :: MacOS :: MacOS X",
         ],
+    requirements=[
+            "pyyaml>=3.13"
+        ],
     entry_points={
         'console_scripts': [
-            'fib-number = flitton_fib_rs.fib_number_command:fib_number_command',
+            'fib-number = flitton_fib_rs.'
+            'fib_number_command:'
+            'fib_number_command',
+            'config-fib = flitton_fib_rs.'
+            'config_number_command:'
+            'config_number_command',
         ],
     },
     zip_safe=False,
