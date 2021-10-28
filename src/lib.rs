@@ -1,46 +1,39 @@
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
+use pyo3::types::PyDict;
 
-mod interface;
-mod fib_calcs;
+mod footprint;
+mod vulnerabilities;
 
-use fib_calcs::fib_number::__pyo3_get_function_fibonacci_number;
-use fib_calcs::fib_numbers::__pyo3_get_function_fibonacci_numbers;
-use interface::config::__pyo3_get_function_run_config;
-use interface::object::__pyo3_get_function_object_interface;
+use footprint::merge_event_ids_with_footprint;
+use vulnerabilities::merge_vulnerabilities_with_footprint;
+use vulnerabilities::structs::VulnerabilityFootPrint;
 
 
 #[pyfunction]
-fn time_add_vectors(total_vector_size: i32) -> Vec<i32> {
+fn get_model(event_ids: Vec<i32>, mut base_path: String, py: Python) -> Vec<&PyDict> {
+    let footprints = merge_event_ids_with_footprint(event_ids, base_path.clone());
+    let model = merge_vulnerabilities_with_footprint(footprints, base_path);
 
-    let mut buffer: Vec<i32> = Vec::new();
-    let first_vector: Vec<i32> = (0..total_vector_size.clone()
-                                        ).map(|x| x).collect();
-    let second_vector: Vec<i32> = (0..total_vector_size
-                                        ).map(|x| x).collect();
+   let mut buffer = Vec::new();
 
-    for i in &first_vector {
-        buffer.push(first_vector[**&i as usize] +
-                     second_vector[*i as usize]);
-    }
+   for i in model {
+       let placeholder = PyDict::new(py);
+       placeholder.set_item("vulnerability_id", i.vulnerability_id);
+       placeholder.set_item("intensity_bin_id", i.intensity_bin_id);
+       placeholder.set_item("damage_bin_id", i.damage_bin_id);
+       placeholder.set_item("damage_probability", i.damage_probability);
+       placeholder.set_item("event_id", i.event_id);
+       placeholder.set_item("areaperil_id", i.areaperil_id);
+       placeholder.set_item("footprint_probability", i.footprint_probability);
+       placeholder.set_item("total_probability", i.total_probability);
+       buffer.push(placeholder);
+   }
    return buffer
 }
 
-
-
-#[pyfunction]
-fn say_hello() {
-    println!("saying hello from Rust!");
-}
-
-
 #[pymodule]
-fn flitton_fib_rs(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_wrapped(wrap_pyfunction!(say_hello));
-    m.add_wrapped(wrap_pyfunction!(fibonacci_number));
-    m.add_wrapped(wrap_pyfunction!(fibonacci_numbers));
-    m.add_wrapped(wrap_pyfunction!(run_config));
-    m.add_wrapped(wrap_pyfunction!(object_interface));
-    m.add_wrapped(wrap_pyfunction!(time_add_vectors));
+fn flitton_oasis_risk_modelling(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_wrapped(wrap_pyfunction!(get_model));
     Ok(())
 }
